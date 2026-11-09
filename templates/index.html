@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pose Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #14213D;
+    --blue: #1F4FD8;
+    --sun: #FFC93C;
+    --coral: #E4572E;
+    --paper: #F7F9FC;
+    --line: #D5DCEB;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Baloo 2", "Trebuchet MS", system-ui, sans-serif;
+    font-size: 18px;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* ---------- top part ---------- */
+  header {
+    display: flex; align-items: center; gap: 24px;
+    background: var(--blue); color: white;
+    border-radius: 24px; padding: 20px 28px; margin-bottom: 28px;
+  }
+  header h1 { margin: 0; font-size: 2.4rem; font-weight: 800; line-height: 1.1; }
+  header p  { margin: 6px 0 0; font-size: 1.1rem; }
+  .figure { width: 110px; flex-shrink: 0; }
+  .figure line { stroke: white; stroke-width: 5; stroke-linecap: round; }
+  .figure circle { fill: var(--sun); }
+  .figure .head { fill: none; stroke: white; stroke-width: 5; }
+  .wave { transform-origin: 62px 50px; animation: wave 1.2s ease-in-out infinite alternate; }
+  @keyframes wave { from { transform: rotate(-20deg); } to { transform: rotate(35deg); } }
+
+  /* ---------- tabs ---------- */
+  .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .tab {
+    font: inherit; font-weight: 700; cursor: pointer;
+    padding: 10px 22px; border-radius: 999px;
+    border: 3px solid var(--ink); background: white; color: var(--ink);
+  }
+  .tab[aria-selected="true"] { background: var(--sun); }
+  .tab:focus-visible, .btn:focus-visible { outline: 4px solid var(--blue); outline-offset: 2px; }
+
+  /* ---------- panels ---------- */
+  .panel { display: none; }
+  .panel.open { display: block; }
+  .panel h2 { margin: 0 0 4px; font-size: 1.6rem; }
+  .panel > p { margin: 0 0 16px; max-width: 60ch; }
+
+  .btn {
+    font: inherit; font-weight: 700; cursor: pointer;
+    padding: 10px 22px; border-radius: 12px; border: 3px solid var(--ink);
+    background: var(--blue); color: white;
+  }
+  .btn.stop { background: var(--coral); }
+  .btn:disabled { opacity: .5; cursor: wait; }
+  input[type=file] { font: inherit; margin-right: 8px; max-width: 100%; }
+
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px; }
+
+  .screen {
+    background: var(--ink); border-radius: 18px; min-height: 240px;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden; color: #b9c3dd; text-align: center; padding: 8px;
+  }
+  .screen img { max-width: 100%; border-radius: 12px; display: none; }
+  .msg { min-height: 1.6em; margin: 10px 0 0; font-weight: 700; color: var(--coral); }
+
+  .tips { margin-top: 36px; padding: 16px 20px; border-left: 8px solid var(--sun); background: white; border-radius: 0 16px 16px 0; }
+  .tips h3 { margin: 0 0 6px; }
+  .tips ul { margin: 0; padding-left: 20px; }
+
+  @media (max-width: 600px) {
+    header { flex-direction: column; text-align: center; }
+    header h1 { font-size: 1.9rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .wave { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <svg class="figure" viewBox="0 0 120 130" aria-hidden="true">
+      <circle class="head" cx="60" cy="20" r="14"/>
+      <line x1="60" y1="34" x2="60" y2="85"/>
+      <line x1="60" y1="50" x2="30" y2="72"/>
+      <g class="wave"><line x1="62" y1="50" x2="92" y2="22"/><circle cx="92" cy="22" r="6"/></g>
+      <line x1="60" y1="85" x2="38" y2="122"/>
+      <line x1="60" y1="85" x2="82" y2="122"/>
+      <circle cx="60" cy="50" r="6"/><circle cx="60" cy="85" r="6"/>
+      <circle cx="30" cy="72" r="6"/><circle cx="38" cy="122" r="6"/><circle cx="82" cy="122" r="6"/>
+    </svg>
+    <div>
+      <h1>Pose Tracker</h1>
+      <p>A computer that finds the dots on your body. Upload a photo or video to see the pose.</p>
+    </div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-panel="photo">Upload photo</button>
+    <button class="tab" role="tab" aria-selected="false" data-panel="video">Upload video</button>
+  </div>
+
+  <!-- PHOTO -->
+  <section class="panel open" id="photo">
+    <h2>Upload a photo</h2>
+    <p>Pick a photo with a person in it. The computer will draw the body dots on it.</p>
+    <div class="row">
+      <input type="file" id="photoFile" accept="image/*">
+      <button class="btn" id="photoBtn">Find the pose</button>
+    </div>
+    <div class="screen"><span id="photoHint">Your result will show here.</span><img id="photoImg" alt="Photo with pose dots"></div>
+    <p class="msg" id="photoMsg"></p>
+  </section>
+
+  <!-- VIDEO -->
+  <section class="panel" id="video">
+    <h2>Upload a video</h2>
+    <p>Pick a short video (an .mp4 works best). The result plays while the computer works on it.</p>
+    <div class="row">
+      <input type="file" id="videoFile" accept="video/*">
+      <button class="btn" id="videoBtn">Find the pose</button>
+    </div>
+    <div class="screen"><span id="videoHint">Your result will show here.</span><img id="videoImg" alt="Video with pose dots"></div>
+    <p class="msg" id="videoMsg"></p>
+  </section>
+
+  <div class="tips">
+    <h3>How does it work?</h3>
+    <ul>
+      <li>Your uploaded photo or video gives Python pictures to analyse.</li>
+      <li>MediaPipe (an AI helper) finds 33 points on the body, like shoulders, elbows and knees.</li>
+      <li>OpenCV draws the dots and lines, then the website shows the picture.</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  // ---------- switching tabs ----------
+  const tabs = document.querySelectorAll(".tab");
+  tabs.forEach(tab => {
+    tab.addEventListener("click", () => {
+      tabs.forEach(t => t.setAttribute("aria-selected", t === tab));
+      document.querySelectorAll(".panel").forEach(p => p.classList.remove("open"));
+      document.getElementById(tab.dataset.panel).classList.add("open");
+    });
+  });
+
+  // small helper: show a picture and hide the hint text
+  function showImage(prefix, url) {
+    document.getElementById(prefix + "Hint").style.display = "none";
+    const img = document.getElementById(prefix + "Img");
+    img.style.display = "block";
+    img.src = url;
+  }
+
+  // ---------- PHOTO ----------
+  document.getElementById("photoBtn").addEventListener("click", async () => {
+    const file = document.getElementById("photoFile").files[0];
+    const msg = document.getElementById("photoMsg");
+    if (!file) { msg.textContent = "Please choose a photo first."; return; }
+
+    msg.textContent = "Working...";
+    const form = new FormData();
+    form.append("file", file);
+    try {
+      const reply = await fetch("/photo", { method: "POST", body: form });
+      if (!reply.ok) { msg.textContent = (await reply.json()).error; return; }
+      showImage("photo", URL.createObjectURL(await reply.blob()));
+      msg.textContent = "";
+    } catch (e) {
+      msg.textContent = "Something went wrong. Is the Python program still running?";
+    }
+  });
+
+  // ---------- VIDEO ----------
+  document.getElementById("videoBtn").addEventListener("click", async () => {
+    const file = document.getElementById("videoFile").files[0];
+    const msg = document.getElementById("videoMsg");
+    const btn = document.getElementById("videoBtn");
+    if (!file) { msg.textContent = "Please choose a video first."; return; }
+
+    msg.textContent = "Uploading...";
+    btn.disabled = true;
+    const form = new FormData();
+    form.append("file", file);
+    try {
+      const reply = await fetch("/upload_video", { method: "POST", body: form });
+      const data = await reply.json();
+      if (!reply.ok) { msg.textContent = data.error; return; }
+      showImage("video", "/video_feed/" + data.name);
+      msg.textContent = "";
+    } catch (e) {
+      msg.textContent = "Something went wrong. Is the Python program still running?";
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
+</body>
+</html>
